@@ -1,59 +1,107 @@
-// strandtest.ino
-// adapted from the Adafruit_DotStar example code.
-
+///////////////////////// DECLARATIONS //////////////////////
 #include <Adafruit_DotStar.h>
-#include <SPI.h>        
+#include <SPI.h>   
+#include "MPU9250.h" 
 
 #define NUMPIXELS 7
-#define NUMBUFFERS 4
-#define DEBOUNCETIME 20
+#define NUMBUTTONS 4
+#define DEBOUNCETIME 40
+#define ACCEL_RANGE 4
+#define GYRO_RANGE 500
+#define YPR_RANGE 180
+#define updateRate 25
+#define MPU9250_ADDRESS 0x68
 
-// Dotstar clock pin is D13
-// Dotstar data pin is D11
+////////// LEDs
+// Dotstar clock pin (blue) is D13
+// Dotstar data pin (green) is D11
 Adafruit_DotStar strip(NUMPIXELS, DOTSTAR_BRG);
-uint32_t colors[NUMBUFFERS] = {0x42cbf5, 0xe642f5, 0x74fe00, 0xff0000};
+uint32_t colors[NUMBUTTONS] = {0x42cbf5, 0xe642f5, 0x74fe00, 0xff0000};
 
-byte buttonPins[NUMBUFFERS] = {4, 5, 6, 7};
-int debounceTimer[NUMBUFFERS];
-
+////////// BUTTONS
+byte buttonPins[NUMBUTTONS] = {4, 5, 6, 7};
+int debounceTimer[NUMBUTTONS];
 enum btn{ON, DEBOUNCE, OFF};
-btn buttonStates[NUMBUFFERS] = {OFF, OFF, OFF, OFF};
-boolean toggledOn[NUMBUFFERS] = {false, false, false, false};
-boolean toggledOff[NUMBUFFERS] = {false, false, false, false};
+btn buttonStates[NUMBUTTONS] = {OFF, OFF, OFF, OFF};
+boolean toggledOn[NUMBUTTONS] = {false, false, false, false};
+boolean toggledOff[NUMBUTTONS] = {false, false, false, false};
 
+////////// IMU
+// struct Quat {
+//   float x;
+//   float y;
+//   float z;
+//   float w;
+// } quat;
+
+// struct Euler {
+//   float x;
+//   float y;
+//   float z;
+// } euler;
+
+struct YPR {
+  float r;
+  float p;
+  float y;
+} ypr;
+
+// struct Acc {
+//   float x;
+//   float y;
+//   float z;
+// } acc;
+
+// struct LinAcc {
+//   float x;
+//   float y;
+//   float z;
+// } linAcc;
+
+// struct Mag {
+//   float x;
+//   float y;
+//   float z;
+// } mag;
+
+// struct Gyr {
+//   float x;
+//   float y;
+//   float z;
+// } gyr;
+
+MPU9250 mpu;
+
+//////////////////////////// SETUP AND LOOP /////////////////////////////
 void setup() {
-  strip.begin(); // Initialize pins for output
-  strip.show();  // Turn all LEDs off ASAP
+  strip.begin();
+  strip.show();  // Turn all LEDs off
 
-  for (int i = 0; i < NUMBUFFERS; i++) {
+  for (int i = 0; i < NUMBUTTONS; i++) {
     pinMode(buttonPins[i], INPUT_PULLUP);
   }
 
-  Serial.begin(115200);
   analogReadResolution(14);
+
+  Wire.begin(); // initialize I2C
+  delay(2000);
+  Serial.begin(230400);
+  while (!Serial) {
+    ;  // wait for serial port to connect
+  }
+  delay(2000);
+  initMPU9250();
 }
 
 void loop() {
-  buttonStep(); // detect contact with copper tape
-  a2dStep();    // read IMU
-  serialStep(); // IMU data to Max
+  buttonStep(); // detect contact with copper tape ("button")
+  imuStep();    // read IMU and send data
   ledStep();    // change light color
 }
 
-void ledStep() {
-  for (int i = 0; i < NUMBUFFERS; i++) {
-    if (buttonStates[i] == ON) {
-      for(int j = 0; j < NUMPIXELS; j++) {
-        strip.setPixelColor(j, colors[i]);
-      }
-    } break;
-
-    strip.show();
-  }
-}
-
+////////////////////////////////// STEP FUNCTIONS ///////////////////////////////
 void buttonStep() {
-  for (int i=0; i<NUMBUFFERS; i++) {
+  for (int i=0; i<NUMBUTTONS; i++) {
     int reading = digitalRead(buttonPins[i]);
 
     switch (buttonStates[i]) {
@@ -83,4 +131,139 @@ void buttonStep() {
         }
     }
   }
+}
+
+void imuStep() {
+  if (mpu.update()) {
+    static uint32_t prev_ms = millis();
+    if (millis() > prev_ms + updateRate) {
+      imuUpdate();
+      imuSerial();
+      prev_ms = millis();
+    }   
+  }
+}
+
+void ledStep() {
+  for (int i = 0; i < NUMBUTTONS; i++) {
+    if (buttonStates[i] == ON) {
+      for(int j = 0; j < NUMPIXELS; j++) {
+        strip.setPixelColor(j, colors[i]);
+      }
+
+      strip.show();
+    }
+  }
+}
+
+////////////////////////////////// IMU FUNCTIONS /////////////////////////
+void imuSerial() {
+
+  // accelerometer readings are floating point numbers in the range of -4.0 to +4.0
+  // So we add 4.0 to convert to a range of 0.0 to 8.0
+  // then multiply by (2^14 - 1) / 8.0  to make it in the range of 0 to 2^14 - 1
+
+  float scaleNumerator = (1 << 14) - 1.0;
+  // float accelScale = scaleNumerator / ((float)ACCEL_RANGE * 2.0);
+
+  // unsigned int a_x_out = (unsigned int)((acc.x + ACCEL_RANGE) * accelScale);
+  // unsigned int a_y_out = (unsigned int)((acc.y + ACCEL_RANGE) * accelScale);
+  // unsigned int a_z_out = (unsigned int)((acc.z + ACCEL_RANGE) * accelScale);
+
+
+  // gyro readings are floating point numbers in the range of -500 to +500
+  // So we add 500 to convert to a range of 0.0 to 1000.0
+  // then multiply by (2^14 - 1) / 1000.  to make it in the range of 0 to 2^14 - 1
+
+  // float gyroScale = scaleNumerator / ((float)GYRO_RANGE * 2.0);
+
+  // unsigned int g_x_out = (unsigned int)((gyr.x + GYRO_RANGE) * gyroScale);
+  // unsigned int g_y_out = (unsigned int)((gyr.y + GYRO_RANGE) * gyroScale);
+  // unsigned int g_z_out = (unsigned int)((gyr.z + GYRO_RANGE) * gyroScale);
+
+
+    //  ypr readings are floating point numbers in the range of -180 to +180
+    // So we add 360 to convert to a range of 0.0 to 360
+    // then multiply by (2^14 - 1) / 360.  to make it in the range of 0 to 2^14 - 1
+
+  float yprScale = scaleNumerator / ((float)YPR_RANGE * 2.0);
+
+  unsigned int ypr_y_out = (unsigned int)((ypr.y + YPR_RANGE) * yprScale);
+  unsigned int ypr_p_out = (unsigned int)((ypr.p + YPR_RANGE) * yprScale);
+  unsigned int ypr_r_out = (unsigned int)((ypr.r + YPR_RANGE) * yprScale);
+
+
+  //separate packets with the value 255
+  Serial.write(255);
+
+  // send button pressed
+  for (int i = 0; i < NUMBUTTONS; i++) {
+    if (buttonStates[i] == ON) {
+      Serial.write(250 - i);
+    }
+    // purple = 0 or 250
+    // yellow = 2 or 248
+    // blue = 1 or 249
+    // green = 3 or 247
+  }
+
+  // for each axis, send 7MSB by right shifting by 7
+  // then send 7LSB by binary & with 0b1111111 (==127)
+
+  // Serial.write(a_x_out >> 7);
+  // Serial.write(a_x_out & 127);
+  // Serial.write(a_y_out >> 7);
+  // Serial.write(a_y_out & 127);
+  // Serial.write(a_z_out >> 7);
+  // Serial.write(a_z_out & 127);
+
+  // Serial.write(g_x_out >> 7);
+  // Serial.write(g_x_out & 127);
+  // Serial.write(g_y_out >> 7);
+  // Serial.write(g_y_out & 127);
+  // Serial.write(g_z_out >> 7);
+  // Serial.write(g_z_out & 127);
+
+  Serial.write(ypr_y_out >> 7);
+  Serial.write(ypr_y_out & 127);
+  Serial.write(ypr_p_out >> 7);
+  Serial.write(ypr_p_out & 127);
+  Serial.write(ypr_r_out >> 7);
+  Serial.write(ypr_r_out & 127);
+}
+
+
+void initMPU9250() {
+
+  if (!mpu.setup(MPU9250_ADDRESS)) {  // change to your own address
+    while (1) {
+      Serial.write(254);  //failed to connect
+      delay(5000);
+    }
+  }
+  Serial.write(253);
+  // OPTIONAL CALIBRATION
+  // Probably want to add buttons to begin calibration on button press
+  // delay(1000);
+  // mpu.calibrateAccelGyro();
+  // delay(5000);
+  // Serial.write(252);   // idicates accelerometer/gyro calibration complete
+  // mpu.calibrateMag();
+  // Serial.write(251);  // indicates magnetometer calibration complete
+}
+
+void imuUpdate() {
+  // don't necessarily need to get all of these if they aren't being used.
+  ypr.r = mpu.getRoll();
+  ypr.p = mpu.getPitch();
+  ypr.y = mpu.getYaw();
+  // acc.x = mpu.getAccX();
+  // acc.y = mpu.getAccY();
+  // acc.z = mpu.getAccZ();
+  // mag.x = mpu.getMagX();
+  // mag.y = mpu.getMagY();
+  // mag.z = mpu.getMagZ();
+  // gyr.x = mpu.getGyroX();
+  // gyr.y = mpu.getGyroY();
+  // gyr.z = mpu.getGyroZ();
 }
