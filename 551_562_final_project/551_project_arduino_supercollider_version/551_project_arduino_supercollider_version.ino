@@ -47,12 +47,12 @@ void setup() {
   analogReadResolution(14);
 
   Wire.begin(); // initialize I2C
-  delay(2000);
+  // delay(2000);
   Serial.begin(230400);
   while (!Serial) {
     ;  // wait for serial port to connect
   }
-  delay(2000);
+  // delay(2000);
   initMPU9250();
 }
 
@@ -134,12 +134,12 @@ void imuSerial() {
 
 
   //separate packets with the value 255
-  Serial.write(255);
+  Serial.print(255);
 
   // send button pressed
   for (int i = 0; i < NUMBUTTONS; i++) {
     if (buttonStates[i] == ON) {
-      Serial.write(250 - i);
+      Serial.print(250 - i);
     }
     // purple = 0 or 250
     // yellow = 2 or 248
@@ -150,12 +150,12 @@ void imuSerial() {
   // for each axis, send 7MSB by right shifting by 7
   // then send 7LSB by binary & with 0b1111111 (==127)
 
-  Serial.write(ypr_y_out >> 7);
-  Serial.write(ypr_y_out & 127);
-  Serial.write(ypr_p_out >> 7);
-  Serial.write(ypr_p_out & 127);
-  Serial.write(ypr_r_out >> 7);
-  Serial.write(ypr_r_out & 127);
+  Serial.print(ypr_y_out >> 7);
+  Serial.print(ypr_y_out & 127);
+  Serial.print(ypr_p_out >> 7);
+  Serial.print(ypr_p_out & 127);
+  Serial.print(ypr_r_out >> 7);
+  Serial.print(ypr_r_out & 127);
 }
 
 
@@ -163,11 +163,11 @@ void initMPU9250() {
 
   if (!mpu.setup(MPU9250_ADDRESS)) {  // change to your own address
     while (1) {
-      Serial.write(254);  //failed to connect
+      Serial.print(254);  //failed to connect
       delay(5000);
     }
   }
-  Serial.write(253);
+  Serial.print(253);
 }
 
 void imuUpdate() {
