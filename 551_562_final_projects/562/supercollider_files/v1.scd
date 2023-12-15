@@ -95,7 +95,7 @@ MIDIIn.connectAll;
 				\sndbuf, ~buf0,
 				\startpos, ~startpos0, \startposrand, ~startpos0_rand,
 				\pan, ~pan0, \panrand, ~pan0_rand,
-				\envbuf, ~curveEnv,
+				\envbuf, ~currentEnv,
 				\amp, ~amp0, \amprand, ~amp0_rand]);
 
 			~buff0_exists = 1;
@@ -107,7 +107,7 @@ MIDIIn.connectAll;
 	{
 		| cvalue, ctlnum, channel, device |
 
-		if (cvalue == 127) {
+		if (cvalue == 127 && ~buff0_exists == 1) {
 			["Buffer 0 stop"].postln;
 
 			~synths[0].free;
@@ -119,6 +119,8 @@ MIDIIn.connectAll;
 
 ////////////////////// set envelope for buffer 0 //////////////////////////////////
 (
+~currentEnv = ~curveEnv;
+
 ~midiSqrEnv0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
@@ -127,6 +129,7 @@ MIDIIn.connectAll;
 			["Buffer 0 env => SqrEnv"].postln;
 
 			~synths[0].set(\envbuf, ~sqrEnv);
+			~currentEnv = ~sqrEnv;
 		}
 	}, ccNum: 4, chan: 1
 );
@@ -139,6 +142,7 @@ MIDIIn.connectAll;
 			["Buffer 0 env => FallEnv"].postln;
 
 			~synths[0].set(\envbuf, ~fallEnv);
+			~currentEnv = ~fallEnv;
 		}
 	}, ccNum: 5, chan: 1
 );
@@ -151,6 +155,7 @@ MIDIIn.connectAll;
 			["Buffer 0 env => RiseEnv"].postln;
 
 			~synths[0].set(\envbuf, ~riseEnv);
+			~currentEnv = ~riseEnv;
 		}
 	}, ccNum: 6, chan: 1
 );
@@ -163,6 +168,7 @@ MIDIIn.connectAll;
 			["Buffer 0 env => SpikeEnv"].postln;
 
 			~synths[0].set(\envbuf, ~spikeEnv);
+			~currentEnv = ~spikeEnv;
 		}
 	}, ccNum: 7, chan: 1
 );
@@ -175,6 +181,7 @@ MIDIIn.connectAll;
 			["Buffer 0 env => CurveEnv"].postln;
 
 			~synths[0].set(\envbuf, ~curveEnv);
+			~currentEnv = ~curveEnv;
 		}
 	}, ccNum: 2, chan: 1
 );
