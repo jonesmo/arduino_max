@@ -31,15 +31,20 @@ curve = Env([0, 1, 0], [1, 1], \sin, 1);
 ~curveEnv = Buffer.sendCollection(s, curve.discretize, 1);
 
 ~grainSynthDef = SynthDef(\buf_0, {
-	| triggerrate = 10, grainlength = 0.001, grainlengthrand = 0, sndbuf, startpos, startposrand = 0,
-	pan = 0, panrand = 0, envbuf, gate = 1, amp = 1 |
+	| triggerrate = 10, triggerraterand = 0, grainlength = 0.001, grainlengthrand = 0, sndbuf,
+	startpos, startposrand = 0, pan = 0, panrand = 0, envbuf, gate = 1, amp = 1, amprand = 0 |
 
-	var pan_min, pan_max, grainlength_max, startpos_min, startpos_max;
+	var pan_min, pan_max, amp_min, amp_max, grainlength_max, startpos_min, startpos_max, triggerrate_min, triggerrate_max;
 
 	// pan randomness
 	pan_min = pan - panrand;
 	pan_max = pan + panrand;
 	pan = TRand.kr(pan_min, pan_max, Dust.kr(100));
+
+	// amp randomness
+	amp_min = amp - amprand;
+	amp_max = amp + amprand;
+	amp = TRand.kr(amp_min, amp_max, Dust.kr(100));
 
 	// grain length randomness
 	grainlength_max = grainlength + grainlengthrand;
@@ -49,6 +54,11 @@ curve = Env([0, 1, 0], [1, 1], \sin, 1);
 	startpos_min = startpos - startposrand;
 	startpos_max = startpos + startposrand;
 	startpos = TRand.kr(startpos_min, startpos_max, Dust.kr(100));
+
+	// trigger rate randomness
+	triggerrate_min = triggerrate - triggerraterand;
+	triggerrate_max = triggerrate + triggerraterand;
+	triggerrate = TRand.kr(triggerrate_min, triggerrate_max, Dust.kr(100));
 
 	Out.ar(0, GrainBuf.ar(2, Impulse.kr(triggerrate), grainlength, sndbuf, 1, startpos, 2, pan, envbuf) * amp);
 }).add;
@@ -79,13 +89,14 @@ MIDIIn.connectAll;
 		if (cvalue == 127 && ~buff0_exists == 0) {
 			["Buffer 0 start"].postln;
 
-			~synths[0] = Synth.new(\buf_0, [\triggerrate, ~triggerrate0,
+			~synths[0] = Synth.new(\buf_0,
+				[\triggerrate, ~triggerrate0, \triggerraterand, ~triggerrate0_rand,
 				\grainlength, ~grainlength0, \grainlengthrand, ~grainlength0_rand,
 				\sndbuf, ~buf0,
 				\startpos, ~startpos0, \startposrand, ~startpos0_rand,
 				\pan, ~pan0, \panrand, ~pan0_rand,
 				\envbuf, ~curveEnv,
-				\amp, ~amp0]);
+				\amp, ~amp0, \amprand, ~amp0_rand]);
 
 			~buff0_exists = 1;
 		};
@@ -176,11 +187,30 @@ MIDIIn.connectAll;
 	{
 		| cvalue, ctlnum, channel, device |
 
+		~amp0 = cvalue.linlin(1, 127, 0.001, 1);
+
 		if (~buff0_exists == 1) {
-			~amp0 = cvalue.linlin(1, 127, 0.001, 1);
 			~synths[0].set(\amp, ~amp0);
 		}
 	}, ccNum: 44, chan: 0
+);
+
+// amp randomness
+~midiAmp0_rand = MIDIFunc.cc(
+	{
+		| cvalue, ctlnum, channel, device |
+
+		if (~buff0_exists == 1) {
+			~amp0_rand = cvalue.linexp(1, 127, 0.05, 0.9);
+
+			if (cvalue > 0) {
+				~synths[0].set(\amprand, ~amp0_rand);
+			}
+			{
+				~synths[0].set(\amprand, 0);
+			}
+		}
+	}, ccNum: 40, chan: 0
 );
 
 // pan
@@ -195,7 +225,7 @@ MIDIIn.connectAll;
 	}, ccNum: 3, chan: 0
 );
 
-// if pan knob pressed, set pan back to 0
+// pan reset
 ~midiResetPan0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
@@ -251,8 +281,7 @@ MIDIIn.connectAll;
 
 		if (~buff0_exists == 1) {
 			shortest_deviation = 5.0 / ~buf0.sampleRate;
-			longest_deviation = ~grainlength0 * 2.0;
-			longest_deviation.postln;
+			longest_deviation = ~grainlength0 * 3.0;
 
 			~grainlength0_rand = cvalue.linlin(1, 127, shortest_deviation, longest_deviation);
 
@@ -282,7 +311,7 @@ MIDIIn.connectAll;
 		| cvalue, ctlnum, channel, device |
 
 		if (~buff0_exists == 1) {
-			~startpos0_rand = cvalue.linexp(1, 127, 0.001, 5.0);
+			~startpos0_rand = cvalue.linexp(1, 127, 0.0001, 5.0);
 
 			if (cvalue > 0) {
 				~synths[0].set(\startposrand, ~startpos0_rand);
@@ -308,12 +337,22 @@ MIDIIn.connectAll;
 ~midiTriggerRate0_Rand = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
+		var smallest_deviation, largest_deviation;
 
 		if (~buff0_exists == 1) {
-			~triggerrate0 = cvalue.linlin(1, 127, 2, 40);
-			~synths[0].set(\triggerrate, ~triggerrate0);
+			smallest_deviation = ~triggerrate0 / 2;
+			largest_deviation = ~triggerrate0 * 2;
+
+			~triggerrate0_rand = cvalue.linlin(1, 127, smallest_deviation, largest_deviation);
+
+			if (cvalue > 0) {
+				~synths[0].set(\triggerraterand, ~triggerrate0_rand);
+			}
+			{
+				~synths[0].set(\triggerraterand, 0);
+			}
 		}
-	}, ccNum: 2, chan: 0
+	}, ccNum: 6, chan: 0
 );
 )
 
@@ -338,6 +377,7 @@ CmdPeriod.run;
 ~midiTriggerRate0.free;
 ~midiPlaySpeed0.free;
 ~midiPan0_Rand.free;
+~midiAmp0_Rand.free;
 ~midiStartPos0_Rand.free;
 ~midiGrainLength0_Rand.free;
 ~midiTriggerRate0_Rand.free;
