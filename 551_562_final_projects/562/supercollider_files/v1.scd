@@ -1,16 +1,15 @@
 s.boot;
 s.reboot;
-CmdPeriod.run;
-MIDIIn.disconnectAll;
+
 currentEnvironment;
 currentEnvironment.clear;
 Server.default.options.outDevice_("MacBook Pro Speakers");
 
 // create buffers
 (
-~stefani = Buffer.read(s, "stefani.wav".resolveRelative);
-~stefani_left = Buffer.readChannel(s, "stefani.wav".resolveRelative, channels: [0]);
 ~synths = Array.newClear(4);
+
+~buf0 = Buffer.readChannel(s, "stefani.wav".resolveRelative, channels: [0]);
 )
 
 // GrainBuf SynthDef and Envelopes
@@ -29,13 +28,12 @@ curve = Env([0, 1, 0], [1, 1], \sin, 1);
 ~riseEnv = Buffer.sendCollection(s, rise.discretize, 1);
 ~curveEnv = Buffer.sendCollection(s, curve.discretize, 1);
 
-SynthDef(\buf_0, { | gate = 1, amp = 1, sndbuf, panCenter = 0, envbuf |
-	var pan;
-	pan = TRand.kr()
+~grainSynthDef = SynthDef(\buf_0, {
+	| triggerrate, grainlength, sndbuf, startpos, pan, envbuf, gate = 1, amp |
 
 	// 2 channels, Impulse.kr(trigger rate in Hz), grain length in sec, buffer, playback speed, start pos, interpolation
 	// method, panning, select grain envelope
-	Out.ar(0, GrainBuf.ar(2, Impulse.kr(10), 0.1, sndbuf, 1, 0.01, 2, panCenter, envbuf) * amp);
+	Out.ar(0, GrainBuf.ar(2, Impulse.kr(triggerrate), grainlength, sndbuf, 1, startpos, 2, pan, envbuf) * amp);
 }).add;
 )
 
@@ -45,7 +43,7 @@ MIDIClient.init;
 MIDIIn.connectAll;
 
 // print MIDI messages
-MIDIFunc.cc(
+~midiPrint = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 		[cvalue,ctlnum,channel].postln;
@@ -57,36 +55,37 @@ MIDIFunc.cc(
 (
 ~buff0_exists = 0;
 
-MIDIFunc.cc(
+~midiStart0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
 		if (cvalue == 127 && ~buff0_exists == 0) {
 			["Buffer 0 start"].postln;
-			~buff0_exists = 1;
 
-			~synths[0] = Synth.new(\buf_0, [\sndbuf, ~stefani_left, \envbuf, ~curveEnv, \amp, ~amp0]);
+			~synths[0] = Synth.new(\buf_0, [\triggerrate, ~triggerrate0, \grainlength, ~grainlength0, \sndbuf, ~buf0,
+				\startpos, ~startpos0, \pan, ~pan0, \envbuf, ~curveEnv, \amp, ~amp0]);
+			~buff0_exists = 1;
 		};
 	}, ccNum: 0, chan: 1
 );
 
-MIDIFunc.cc(
+~midiStop0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
 		if (cvalue == 127) {
 			["Buffer 0 stop"].postln;
-			~buff0_exists = 0;
 
 			~synths[0].free;
+			~buff0_exists = 0;
 		};
-	}, ccNum: 3, chan: 1
+	}, ccNum: 1, chan: 1
 );
 )
 
 ////////////////////// set envelope for buffer 0 //////////////////////////////////
 (
-MIDIFunc.cc(
+~midiSqrEnv0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
@@ -98,7 +97,7 @@ MIDIFunc.cc(
 	}, ccNum: 4, chan: 1
 );
 
-MIDIFunc.cc(
+~midiFallEnv0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
@@ -110,7 +109,7 @@ MIDIFunc.cc(
 	}, ccNum: 5, chan: 1
 );
 
-MIDIFunc.cc(
+~midiRiseEnv0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
@@ -122,7 +121,7 @@ MIDIFunc.cc(
 	}, ccNum: 6, chan: 1
 );
 
-MIDIFunc.cc(
+~midiSpikeEnv0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
@@ -134,7 +133,7 @@ MIDIFunc.cc(
 	}, ccNum: 7, chan: 1
 );
 
-MIDIFunc.cc(
+~midiCurveEnv0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
@@ -149,7 +148,8 @@ MIDIFunc.cc(
 
 ///////////////////////////////// mixing: amp, panning ///////////////////////
 (
-MIDIFunc.cc(
+// amp
+~midiAmp0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
@@ -160,39 +160,90 @@ MIDIFunc.cc(
 	}, ccNum: 15, chan: 0
 );
 
-MIDIFunc.cc(
+// pan
+~midiPan0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
 		if (~buff0_exists == 1) {
 			~pan0 = cvalue.linlin(1, 127, -1, 1);
-			~synths[0].set(\panCenter, ~pan0);
+			~synths[0].set(\pan, ~pan0);
 		}
-	}, ccNum: 8, chan: 0
+	}, ccNum: 3, chan: 0
 );
 
 // if pan knob pressed, set pan back to 0
-MIDIFunc.cc(
+~midiResetPan0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
 
 		if (~buff0_exists == 1) {
 			if (cvalue == 127) {
-				~synths[0].set(\panCenter, 0);
+				~synths[0].set(\pan, 0);
 			}
 		}
-	}, ccNum: 8, chan: 1
+	}, ccNum: 3, chan: 1
 );
+)
 
-// randomize panning
-MIDIFunc.cc(
+/////////////////////////////// grain attributes: grain size, rate of fire, start pos, speed ///////////
+(
+~midiGrainLength0 = MIDIFunc.cc(
 	{
 		| cvalue, ctlnum, channel, device |
-		var currentPan;
+		var shortest, track_length, longest;
 
 		if (~buff0_exists == 1) {
-			~panRand0 = cvalue.linlin(1, 127, 0.001, 1);
+			shortest = 5.0 / ~buf0.sampleRate;
+			longest = 0.4;
+
+			~grainlength0 = cvalue.linexp(1, 127, shortest, longest);
+			~synths[0].set(\grainlength, ~grainlength0);
 		}
-	}, ccNum: 12, chan: 0
+	}, ccNum: 0, chan: 0
 );
+
+~midiStartPos0 = MIDIFunc.cc(
+	{
+		| cvalue, ctlnum, channel, device |
+
+		if (~buff0_exists == 1) {
+			~startpos0 = cvalue.linlin(1, 127, 0.05, 0.95);
+			~synths[0].set(\startpos, ~startpos0);
+		}
+	}, ccNum: 1, chan: 0
+);
+
+~midiTriggerRate0 = MIDIFunc.cc(
+	{
+		| cvalue, ctlnum, channel, device |
+
+		if (~buff0_exists == 1) {
+			~triggerrate0 = cvalue.linexp(1, 127, 2, 40);
+			~synths[0].set(\triggerrate, ~triggerrate0);
+		}
+	}, ccNum: 2, chan: 0
+);
+)
+
+/////////////////////////////// FREE ALL ///////////////////////////////////
+(
+CmdPeriod.run;
+~grainSynthDef.free;
+
+~midiPrint.free;
+~midiStart0.free;
+~midiStop0.free;
+~midiSqrEnv0.free;
+~midiFallEnv0.free;
+~midiRiseEnv0.free;
+~midiSpikeEnv0.free;
+~midiCurveEnv0.free;
+~midiAmp0.free;
+~midiPan0.free;
+~midiResetPan0.free;
+~midiGrainLength0.free;
+~midiStartPos0.free;
+~midiTriggerRate0.free;
+~midiPlaySpeed0.free;
 )
