@@ -11,6 +11,7 @@ s.options.outDevice_("External Headphones");
 ~synths = Array.newClear(4);
 
 ~buf0 = Buffer.readChannel(s, "stefani.wav".resolveRelative, channels: [0]);
+~buf1 = Buffer.readChannel(s, "ghosts.wav", resolveRelative, channels: [0]);
 )
 
 // GrainBuf SynthDef and Envelopes
