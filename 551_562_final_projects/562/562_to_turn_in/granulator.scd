@@ -1,4 +1,5 @@
 s.boot;
+s.makeWindow; // for recording
 s.reboot;
 
 currentEnvironment;
@@ -10,8 +11,11 @@ s.options.outDevice_("External Headphones");
 (
 ~synths = Array.newClear(4);
 
-~buf0 = Buffer.readChannel(s, "stefani.wav".resolveRelative, channels: [0]);
-~buf1 = Buffer.readChannel(s, "ghosts.wav".resolveRelative, channels: [0]);
+// ~buf0 = Buffer.readChannel(s, "stefani.wav".resolveRelative, channels: [0]);
+// ~buf1 = Buffer.readChannel(s, "ghosts.wav".resolveRelative, channels: [0]);
+
+~buf0 = Buffer.readChannel(s, "mms_05b.mp3".resolveRelative, channels: [0]);
+~buf1 = Buffer.readChannel(s, "mms_09.mp3".resolveRelative, channels: [0]);
 )
 
 // GrainBuf SynthDef and Envelopes

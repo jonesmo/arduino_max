@@ -14,7 +14,7 @@ boolean toggledOff[NBUTTONS] = {false, false};
 // int readings[NBUTTONS];
 // bool buttonChanged = false;
 
-#define NSENSORS 2
+#define NSENSORS 1
 int a_reading[NSENSORS];
 
 void setup() {
