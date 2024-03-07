@@ -4,10 +4,10 @@
 
 #define NSENSORS 2 // number of mux channels to use (up to 8)
 
-int s0 = 2;     // pin number connected to pin S0 of the 4051
-int s1 = 3;     // pin number connected to pin S1 of the 4051
-int s2 = 4;     // pin number connected to pin S2 of the 4051
-int s3 = 5;
+int s0 = 9;     // pin number connected to pin S0 of the 4051
+int s1 = 10;     // pin number connected to pin S1 of the 4051
+int s2 = 11;     // pin number connected to pin S2 of the 4051
+int s3 = 12;
 
 int analogPin = 0;  // pin number connected to the multiplexer's z pin
  

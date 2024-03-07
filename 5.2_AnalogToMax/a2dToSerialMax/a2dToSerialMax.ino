@@ -19,9 +19,10 @@ void loop() {
 
 void a2dStep() {  
   int val;
-  val = analogRead(0);    // read the value of analog pin 0
+  val = analogRead(4);    // read the value of analog pin 0
 
-  Serial.write(val>>2);   // send the value as serial data
+  // Serial.write(val>>2);   // send the value as serial data
                           // bit shift right to get an 8-bit number
+  Serial.println(val);
 
 }
