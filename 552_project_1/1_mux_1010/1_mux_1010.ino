@@ -26,6 +26,7 @@ void loop () {
   int b0, b1, b2, b3;   //variables for storing the 3 bits of the y pin number
   int sensors[NSENSORS];   //sensor values
   
+  Serial.write(255);
   for (int count=0; count<NSENSORS; count++) {
     // select the bit  
     b0 = bitRead(count,0);  // bit 0 of count
@@ -39,9 +40,12 @@ void loop () {
     digitalWrite(s3, b3);   // set address pin 3 of the mux
 
     sensors[count] = analogRead(analogPin);   // get the analog value -- only read 1 pin
-    Serial.print(sensors[count]);  //print to serial monitor
-    Serial.print(" | ");          
+    // Serial.print(sensors[count]);  //print to serial monitor
+    // Serial.print(" | "); 
+
+    Serial.write(sensors[count] >> 3);
+    Serial.write(sensors[count] & 7);         
   }  
-  Serial.println();
+  // Serial.println();
   delay(100);
 }
