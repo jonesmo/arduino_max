@@ -7011,7 +7011,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 203.0, 147.0, 169.0, 22.0 ],
-									"text" : "host 192.168.8.134, port 2390"
+									"text" : "host 192.168.8.141, port 2390"
 								}
 
 							}

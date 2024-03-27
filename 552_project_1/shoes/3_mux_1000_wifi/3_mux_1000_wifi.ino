@@ -61,39 +61,9 @@ void loop () {
     sendUdp();
   }
   sendUdp();
-  
-  // Serial.write(255);
-  // for (int count=0; count<NSENSORS; count++) {
-  //   // select the bit  
-  //   b0 = bitRead(count,0);  // bit 0 of count
-  //   b1 = bitRead(count,1);  // bit 1 of count
-  //   b2 = bitRead(count,2);  // bit 2 of count 
-  //   b3 = bitRead(count,3);  // bit 3 of count    
-
-  //   digitalWrite(s0, b0);   // set address pin 0 of the mux
-  //   digitalWrite(s1, b1);   // set address pin 1 of the mux
-  //   digitalWrite(s2, b2);   // set address pin 2 of the mux
-  //   digitalWrite(s3, b3);   // set address pin 3 of the mux
-
-  //   sensors[count] = analogRead(analogPin);   // get the analog value -- only read 1 pin
-  //   // Serial.print(sensors[count]);  //print to serial monitor
-  //   // Serial.print(" | "); 
-
-  //   Serial.write(sensors[count] >> 3);
-  //   Serial.write(sensors[count] & 7);         
-  // }  
-  // Serial.println();
   delay(100);
 }
 
-/*****************************************************
-   int receiveUdp()
-
-   Look for incoming Udp packets.
-   If received, print the packet size, sending IP and port to Serial.
-   Read the packet contents into a char array and print to Serial.
-   Returns the packet size -- should be 0 if no data received.
-*/
 int receiveUdp() {
   // look for a UDP a packet
   int packetSize = Udp.parsePacket();
@@ -109,8 +79,6 @@ int receiveUdp() {
     Serial.println(Udp.remotePort());
 
     // read the packet into packetBufffer
-    // Note that this only works if the incoming udp data is a string
-    // If the data is udp
     int len = Udp.read(packetBuffer, 255);
     if (len > 0) {
       packetBuffer[len] = 0;
@@ -124,14 +92,6 @@ int receiveUdp() {
 
 }
 
-/***********************************************
- * void sendUdp()
- * 
- * Send an OSC message over UDP
- * Demonstrates sending a single address string and a list of arguments
- * Arguments are integer values from the 6 Arduino analog inputs.
- * 
- */
 void sendUdp() {
   int b0, b1, b2, b3;
   int sensors[NSENSORS];
@@ -142,7 +102,7 @@ void sendUdp() {
     b0 = bitRead(count,0);  // bit 0 of count
     b1 = bitRead(count,1);  // bit 1 of count
     b2 = bitRead(count,2);  // bit 2 of count 
-    b3 = bitRead(count,3);  // bit 3 of count    
+    b3 = bitRead(count,3);  // bit 3 of count   
 
     digitalWrite(s0, b0);   // set address pin 0 of the mux
     digitalWrite(s1, b1);   // set address pin 1 of the mux
@@ -150,12 +110,13 @@ void sendUdp() {
     digitalWrite(s3, b3);   // set address pin 3 of the mux
 
     sensors[count] = analogRead(analogPin);
-    msg.add(sensors[count]);
-    // msg.add(sensors[count] >> 3);
-    // msg.add(sensors[count] & 7);       
+
+    Serial.println(count);
+    Serial.println(sensors[count]);
+
+    msg.add(sensors[count]);     
   }  
 
-  // send a reply, to the IP address and specified port
   Udp.beginPacket(Udp.remoteIP(), REMOTE_PORT);
   msg.send(Udp);    // write the OSC msg into the UDP packet
   Udp.endPacket();  // terminate and send the UDP packet
