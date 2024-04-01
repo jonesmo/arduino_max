@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 import timeit
 from pythonosc import udp_client, osc_message_builder
+import config
 
 def create_labels(num_class_1, num_class_2, num_class_3, num_class_4, num_class_5):
   y1, y2, y3, y4, y5 = 0, 1, 2, 3, 4
@@ -122,3 +123,13 @@ def send_as_osc(port, address, prediction):
 
   msg = msg.build()
   client.send(msg)
+  
+def print_handler(address, *args):
+    if address == "/done_playing":
+      print(f"{address}: {args}")
+      
+def playback_done(address, *args):
+    for arg in args:
+      if arg == "blah":
+        config.done_yet = True
+        print("Done playing back")
