@@ -1,0 +1,62 @@
+[
+    {
+        "accuracy": 0.7125984251968503,
+        "alpha": 1,
+        "iters": 3
+    },
+    {
+        "accuracy": 0.905511811023622,
+        "alpha": 1,
+        "iters": 10
+    },
+    {
+        "accuracy": 0.9094488188976378,
+        "alpha": 1,
+        "iters": 20
+    },
+    {
+        "accuracy": 0.7795275590551181,
+        "alpha": 2,
+        "iters": 3
+    },
+    {
+        "accuracy": 0.8937007874015748,
+        "alpha": 2,
+        "iters": 10
+    },
+    {
+        "accuracy": 0.9173228346456693,
+        "alpha": 2,
+        "iters": 20
+    },
+    {
+        "accuracy": 0.7677165354330708,
+        "alpha": 3,
+        "iters": 3
+    },
+    {
+        "accuracy": 0.8976377952755905,
+        "alpha": 3,
+        "iters": 10
+    },
+    {
+        "accuracy": 0.8976377952755905,
+        "alpha": 3,
+        "iters": 20
+    },
+    {
+        "accuracy": 0.7677165354330708,
+        "alpha": 5,
+        "iters": 3
+    },
+    {
+        "accuracy": 0.905511811023622,
+        "alpha": 5,
+        "iters": 10
+    },
+    {
+        "accuracy": 0.8976377952755905,
+        "alpha": 5,
+        "iters": 20
+    }
+]

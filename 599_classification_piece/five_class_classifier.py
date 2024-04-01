@@ -18,23 +18,10 @@ import os
 import re
 from time import time
 
-from utilities import accuracy, create_labels
+from utilities import accuracy, create_labels, load_mfccs
 
 # Load samples
-path_water = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/water_mfccs.npy"
-water = np.load(path_water)
-
-path_wildfire = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/wildfire_mfccs.npy"
-wildfire = np.load(path_wildfire)
-
-path_wind = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/wind_mfccs.npy"
-wind = np.load(path_wind)
-
-path_frogs = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/frog_mfccs.npy"
-frogs = np.load(path_frogs)
-
-path_birds = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/bird_mfccs.npy"
-birds = np.load(path_birds)
+water, wildfire, wind, frogs, birds = load_mfccs()
 
 # Get time, create folders
 current_time = int(time())
