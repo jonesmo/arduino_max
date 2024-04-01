@@ -16,21 +16,22 @@ class_map = {0: {"mfccs": water, "num": len(water), "name": "water"},
              1: {"mfccs": wildfire, "num": len(wildfire), "name": "fire"}, 
              2: {"mfccs": wind, "num": len(wind), "name": "wind"}, 
              3: {"mfccs": frogs, "num": len(frogs), "name": "frogs"}, 
-             4: {"mfccs": birds, "num": len(birds)}, "name": "birds"}
+             4: {"mfccs": birds, "num": len(birds), "name": "birds"}
+}
 
-starter_class = 0
+starter_class = 4
 starter_index = -1
 sample = class_map[starter_class]["mfccs"][starter_index]
 
 prediction = predict_sample(model, sample)
 print("\nClass prediction: ", class_map[prediction]["name"], " ", prediction)
 
-# Pick a MFCC set from that class
+# Pick an MFCC set from that class
 new_index = random.randint(0, class_map[prediction]["num"])
 print("New sample to play: ", new_index, " / ", class_map[prediction]["num"], "\n")
 
 # Send to Max
-send_as_osc(5005, "/prediction", prediction)
+send_as_osc(5005, "/prediction", prediction, new_index)
 
 # Wait for playback to end
 ip = "127.0.0.1"

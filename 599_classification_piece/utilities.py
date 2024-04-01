@@ -120,11 +120,12 @@ def predict_sample(model, sample):
   
   return predicted_label
 
-def send_as_osc(port, address, prediction):
+def send_as_osc(port, address, prediction, new_sound_index):
   client = udp_client.SimpleUDPClient("127.0.0.1", port)
 
   msg = osc_message_builder.OscMessageBuilder(address = address)
   msg.add_arg(prediction, arg_type="i")
+  msg.add_arg(new_sound_index, arg_type="i")
 
   msg = msg.build()
   client.send(msg)
