@@ -5,10 +5,7 @@ import random
 import time
 import asyncio
 
-from pythonosc.dispatcher import Dispatcher
-from pythonosc.osc_server import AsyncIOOSCUDPServer
-
-from utilities import load_mfccs, load_model, playback_done, predict_sample, print_handler, send_as_osc
+from utilities import await_playback_end, load_mfccs, load_model, osc_server, playback_done, predict_sample, print_handler, send_as_osc
 import config
 
 model = load_model("./trained_models/model1.keras")
@@ -35,29 +32,8 @@ print("New sample to play: ", new_index, " / ", class_map[prediction]["num"], "\
 # Send to Max
 send_as_osc(5005, "/prediction", prediction)
 
-# Get Done from Max
-dispatcher = Dispatcher()
-dispatcher.map("/done_playing", playback_done)
-dispatcher.set_default_handler(print_handler)
-
+# Wait for playback to end
 ip = "127.0.0.1"
 port = 5006
-
-async def loop():
-  # timeout_start = time.time()
-  # timeout = 60*0.25
-  
-  while config.done_yet == False:
-      print(time.time())
-      await asyncio.sleep(1)
-
-async def osc_server():
-    done_yet = False
-    server = AsyncIOOSCUDPServer((ip, port), dispatcher, asyncio.get_event_loop())
-    transport, protocol = await server.create_serve_endpoint()
-
-    await loop()
-
-    transport.close()
     
-asyncio.run(osc_server())
+asyncio.run(osc_server(ip, port))

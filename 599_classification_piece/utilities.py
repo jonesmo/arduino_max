@@ -5,7 +5,12 @@ from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 
 import timeit
+import asyncio
+
 from pythonosc import udp_client, osc_message_builder
+from pythonosc.osc_server import AsyncIOOSCUDPServer
+from pythonosc.dispatcher import Dispatcher
+
 import config
 
 def create_labels(num_class_1, num_class_2, num_class_3, num_class_4, num_class_5):
@@ -99,7 +104,7 @@ def load_model(model_file):
   start_load = timeit.default_timer()
 
   model = tf.keras.models.load_model(model_file, custom_objects={})
-  model.summary()
+  # model.summary()
 
   stop_load = timeit.default_timer()
   time_load = stop_load - start_load
@@ -123,6 +128,27 @@ def send_as_osc(port, address, prediction):
 
   msg = msg.build()
   client.send(msg)
+
+async def osc_server(ip, port):
+    dispatcher = Dispatcher()
+    dispatcher.map("/done_playing", playback_done)
+    dispatcher.set_default_handler(print_handler)
+  
+    done_yet = False
+    server = AsyncIOOSCUDPServer((ip, port), dispatcher, asyncio.get_event_loop())
+    transport, protocol = await server.create_serve_endpoint()
+
+    await await_playback_end()
+
+    transport.close()
+  
+async def await_playback_end():
+  # timeout_start = time.time()
+  # timeout = 60*0.25
+  
+  while config.done_yet == False:
+      print("Playing back...")
+      await asyncio.sleep(1)
   
 def print_handler(address, *args):
     if address == "/done_playing":
@@ -130,6 +156,6 @@ def print_handler(address, *args):
       
 def playback_done(address, *args):
     for arg in args:
-      if arg == "blah":
+      if arg == "done":
         config.done_yet = True
-        print("Done playing back")
+        print("Playback done")
