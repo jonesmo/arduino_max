@@ -23,7 +23,7 @@ ip = "127.0.0.1"
 port = 5006
 
 # Loop
-end_time = time.time() + 30
+end_time = time.time() + 20
 
 class_left = 0
 index_left = -1
@@ -40,11 +40,11 @@ while time.time() < end_time:
   prediction_right = predict_sample(model, sample_right)
   print("\nClass prediction right: ", class_map[prediction_right]["name"], " ", prediction_right)
   
-  new_index_left = random.randint(0, class_map[prediction_left]["num"])
-  print("Left sample to play: ", new_index_left, " / ", class_map[prediction_left]["num"], "\n")
+  index_left = random.randint(0, class_map[prediction_left]["num"])
+  print("Left sample to play: ", index_left, " / ", class_map[prediction_left]["num"], "\n")
 
-  new_index_right = random.randint(0, class_map[prediction_right]["num"])
-  print("Right sample to play: ", new_index_right, " / ", class_map[prediction_right]["num"], "\n")
+  index_right = random.randint(0, class_map[prediction_right]["num"])
+  print("Right sample to play: ", index_right, " / ", class_map[prediction_right]["num"], "\n")
   
-  send_as_osc(5005, "/prediction", prediction_left, new_index_left, prediction_right, new_index_right)
+  send_as_osc(5005, "/prediction", prediction_left, index_left, prediction_right, index_right)
   asyncio.run(osc_server(ip, port))
