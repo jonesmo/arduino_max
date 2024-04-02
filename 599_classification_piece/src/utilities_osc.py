@@ -4,6 +4,8 @@ from pythonosc import udp_client, osc_message_builder
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 from pythonosc.dispatcher import Dispatcher
 
+import config as config
+
 def send_as_osc(port, address, prediction, new_sound_index):
   client = udp_client.SimpleUDPClient("127.0.0.1", port)
 

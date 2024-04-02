@@ -87,10 +87,10 @@ def load_mfccs():
   path_wind = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/wind_mfccs.npy"
   wind = np.load(path_wind)
 
-  path_frogs = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/frog_mfccs.npy"
+  path_frogs = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/frogs_mfccs.npy"
   frogs = np.load(path_frogs)
 
-  path_birds = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/bird_mfccs.npy"
+  path_birds = "/Users/mej/Documents/Arduino/599_classification_piece/mfccs/birds_mfccs.npy"
   birds = np.load(path_birds)
   
   return water, wildfire, wind, frogs, birds
