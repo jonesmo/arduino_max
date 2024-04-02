@@ -19,6 +19,9 @@ scikit-learn = "^1.4.1.post1"
 tensorflow-model-optimization = "^0.8.0"
 python-osc = "^1.8.3"
 asyncio = "^3.4.3"
+ffmpeg = "^1.4"
+audioread = "^3.0.1"
+pydub = "^0.25.1"
 
 
 [build-system]
