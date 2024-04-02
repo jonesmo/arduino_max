@@ -6,12 +6,14 @@ from pythonosc.dispatcher import Dispatcher
 
 import config as config
 
-def send_as_osc(port, address, prediction, new_sound_index):
+def send_as_osc(port, address, prediction_left, new_sound_index_left, prediction_right, new_sound_index_right):
   client = udp_client.SimpleUDPClient("127.0.0.1", port)
 
   msg = osc_message_builder.OscMessageBuilder(address = address)
-  msg.add_arg(prediction, arg_type="i")
-  msg.add_arg(new_sound_index, arg_type="i")
+  msg.add_arg(prediction_left, arg_type="i")
+  msg.add_arg(new_sound_index_left, arg_type="i")
+  msg.add_arg(prediction_right, arg_type="i")
+  msg.add_arg(new_sound_index_right, arg_type="i")
 
   msg = msg.build()
   client.send(msg)
@@ -21,7 +23,7 @@ async def osc_server(ip, port):
     dispatcher.map("/done_playing", playback_done)
     dispatcher.set_default_handler(print_handler)
   
-    done_yet = False
+    config.done_yet = False
     server = AsyncIOOSCUDPServer((ip, port), dispatcher, asyncio.get_event_loop())
     transport, protocol = await server.create_serve_endpoint()
 

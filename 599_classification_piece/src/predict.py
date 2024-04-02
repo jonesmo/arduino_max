@@ -1,6 +1,7 @@
 import random
 import asyncio
 import os
+import time
 
 from utilities import load_mfccs, load_model, predict_sample
 from utilities_osc import osc_server, send_as_osc
@@ -18,22 +19,32 @@ class_map = {0: {"mfccs": water, "num": len(water), "name": "water"},
              4: {"mfccs": birds, "num": len(birds), "name": "birds"}
 }
 
-starter_class = 0
-starter_index = -1
-sample = class_map[starter_class]["mfccs"][starter_index]
-
-prediction = predict_sample(model, sample)
-print("\nClass prediction: ", class_map[prediction]["name"], " ", prediction)
-
-# Pick an MFCC set from that class
-new_index = random.randint(0, class_map[prediction]["num"])
-print("New sample to play: ", new_index, " / ", class_map[prediction]["num"], "\n")
-
-# Send to Max
-send_as_osc(5005, "/prediction", prediction, new_index)
-
-# Wait for playback to end
 ip = "127.0.0.1"
 port = 5006
-    
-asyncio.run(osc_server(ip, port))
+
+# Loop
+end_time = time.time() + 30
+
+class_left = 0
+index_left = -1
+class_right = 2
+index_right = 0
+
+while time.time() < end_time:
+  sample_left = class_map[class_left]["mfccs"][index_left]
+  sample_right = class_map[class_right]["mfccs"][index_right]
+  
+  prediction_left = predict_sample(model, sample_left)
+  print("\nClass prediction left: ", class_map[prediction_left]["name"], " ", prediction_left)
+  
+  prediction_right = predict_sample(model, sample_right)
+  print("\nClass prediction right: ", class_map[prediction_right]["name"], " ", prediction_right)
+  
+  new_index_left = random.randint(0, class_map[prediction_left]["num"])
+  print("Left sample to play: ", new_index_left, " / ", class_map[prediction_left]["num"], "\n")
+
+  new_index_right = random.randint(0, class_map[prediction_right]["num"])
+  print("Right sample to play: ", new_index_right, " / ", class_map[prediction_right]["num"], "\n")
+  
+  send_as_osc(5005, "/prediction", prediction_left, new_index_left, prediction_right, new_index_right)
+  asyncio.run(osc_server(ip, port))
