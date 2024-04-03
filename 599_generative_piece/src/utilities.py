@@ -78,8 +78,9 @@ def keep_training(model, X_train, y_train, iters, batch_size, verbose):
 def accuracy(y_pred_label, y_label):
     return np.mean(y_pred_label == y_label)
 
-def load_audio(directory):
+def load_audio(directory, seconds):
   sr = 44100
+  samples_to_pull = int(seconds * sr)
 
   files_list = os.listdir(directory)
   num_files = len(files_list)
@@ -87,7 +88,7 @@ def load_audio(directory):
   
   print(f"Directory contains", num_files, "audio files.")
   
-  samples_raw = np.zeros(shape=(num_files, 2 * sr))
+  samples_raw = np.zeros(shape=(num_files, samples_to_pull))
   i = 0
   
   for file_name in files_list:
@@ -107,8 +108,8 @@ def load_audio(directory):
 
       audio_length = len(scaled)
       
-      if audio_length > 2 * sr:
-        first_two_seconds = scaled[0:(2*sr)]
+      if audio_length > samples_to_pull:
+        first_two_seconds = scaled[0:samples_to_pull]
 
         samples_raw[i] = first_two_seconds
 
@@ -122,8 +123,8 @@ def load_audio(directory):
       scaled = audio.sum(axis=1) / 2
       audio_length = len(scaled)
 
-      if audio_length > 2 * sr:
-        first_two_seconds = scaled[0:(2*sr)]
+      if audio_length > samples_to_pull:
+        first_two_seconds = scaled[0:samples_to_pull]
 
         samples_raw[i] = first_two_seconds
         
@@ -142,8 +143,8 @@ def load_audio(directory):
 
       audio_length = len(scaled)
 
-      if audio_length > 2 * sr:
-        first_two_seconds = scaled[0:(2*sr)]
+      if audio_length > samples_to_pull:
+        first_two_seconds = scaled[0:samples_to_pull]
 
         samples_raw[i] = first_two_seconds
         

@@ -2,3 +2,6 @@
 __pycache__/
 sound_samples/
 model_checkpoints/
+generated_audio/
+figures/
+trained_models/
