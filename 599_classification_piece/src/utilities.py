@@ -24,8 +24,6 @@ def create_labels(num_class_1, num_class_2, num_class_3, num_class_4, num_class_
   Y_onehot = tf.keras.utils.to_categorical(Y,
                                         num_classes = num_unique_labels)
 
-  print(Y_onehot.shape)
-
   return Y, Y_onehot
 
 def multinomial_logistic_regression(X_train, y_train, num_classes, lr, iters, batch_size, verbose):
