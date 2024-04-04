@@ -12,6 +12,8 @@ void setup() {
 
 void loop() {
   int reading = analogRead(analogPin);
-  analogWrite(ledPin,reading>>2); //bit-shift right by two (divide by 4), to convert to 0-255 range  
+  
+  analogWrite(ledPin, reading>>2); //bit-shift right by two (divide by 4), to convert to 0-255 range  
+
   delay(10);  
 }

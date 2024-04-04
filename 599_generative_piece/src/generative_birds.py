@@ -31,19 +31,35 @@ if not os.path.exists(models_folder):
 		os.makedirs(models_folder)
 
 # Load samples
-birds_audio, bird_files = load_audio("/Users/mej/Documents/Arduino/599_generative_piece/sound_samples/bird_samples", 0.25)
-not_birds_audio, not_bird_files = load_audio("/Users/mej/Documents/Arduino/599_generative_piece/sound_samples/not_bird_samples", 0.25)
+# birds_audio, bird_files = load_audio("/Users/mej/Documents/Arduino/599_generative_piece/sound_samples/bird_samples", 0.5)
+# not_birds_audio, not_bird_files = load_audio("/Users/mej/Documents/Arduino/599_generative_piece/sound_samples/not_bird_samples", 0.5)
 
-print("Bird samples: ", birds_audio.shape)
-print("Not-bird samples: ", not_birds_audio.shape)
+# print("Bird samples: ", birds_audio.shape)
+# print("Not-bird samples: ", not_birds_audio.shape)
+
+# sample_bird = birds_audio[0]
+# sample_not_bird = not_birds_audio[0]
+# print("Sample bird shape: ", sample_bird.shape)
+
+# one_bird_100_times = np.vstack([sample_bird] * 100)
+# one_not_bird_100_times = np.vstack([sample_not_bird] * 100)
+
+# Toy dataset creation
+ones = np.ones(shape=(100, 11000))
+random_noise = np.random.rand(100, 11000)
 
 # Create training and test data
-X = np.concatenate((birds_audio, not_birds_audio), axis=0)
+# X = np.concatenate((birds_audio, not_birds_audio), axis=0)
+# X = np.concatenate((one_bird_100_times, one_not_bird_100_times), axis=0)
+X = np.concatenate((ones, random_noise), axis=0)
+print(X.shape)
 
-Y, Y_onehot = create_labels(birds_audio.shape[0], not_birds_audio.shape[0], 0, 0, 0)
+# Y, Y_onehot = create_labels(birds_audio.shape[0], not_birds_audio.shape[0], 0, 0, 0)
+Y, Y_onehot = create_labels(100, 100, 0, 0, 0)
 t = 0.5
+print(Y_onehot.shape)
 
-X_train, X_test, y_train, y_test = train_test_split(X, Y_onehot, test_size=0.3, stratify=Y)
+X_train, X_test, y_train, y_test = train_test_split(X, Y_onehot, test_size=0.3, stratify=Y, random_state=35)
 print("Training samples: ", y_train.shape[0])
 print("Test samples: ", y_test.shape[0])
 
@@ -58,7 +74,7 @@ lr = 1e-3
 
 model = keras.Sequential([
         layers.Input(shape=(input_d,)),
-        layers.Dense(n, activation = 'relu'),
+        layers.Dense(n, activation = 'tanh'),
         layers.Dense(output_d, activation = 'linear'),
 ])
 
@@ -74,7 +90,7 @@ model.compile(
 print(model.summary())
 
 num_iters = 0
-iters = 10
+iters = 100
 batch_size = 100
 
 checkpoint_path = f"{checkpoints_folder}/{current_time}.weights.h5"
@@ -99,13 +115,7 @@ num_iters += iters
 
 model.save(f"./trained_models/model_{current_time}.keras")
 
-fig1 = plt.plot(history.history['loss'])
-plt.xlabel('Epochs')
-plt.ylabel('Training cross-entropy loss')
-plt.savefig(f'{figure_folder}/loss_history.png')
-plt.clf()
-
-fig2 = plt.plot(history.history['mae'])
+fig1 = plt.plot(history.history['mae'])
 plt.xlabel('Epochs')
 plt.ylabel('Mean absolute error')
 plt.savefig(f'{figure_folder}/mae_history.png')
@@ -113,36 +123,21 @@ plt.clf()
 
 # Make predictions on y_test data
 predictions = model.predict(y_test)
-print(predictions.shape)
+print(predictions.shape, "\n")
+
+# class 1 example
+print(y_test[0])
+print(predictions[0][0:20], "\n")
+
+# class 0 example
+example_to_test = 2
+print(y_test[example_to_test])
+print(predictions[example_to_test][0:20])
 
 # Turn one prediction into an audio example
-rate = 44100
-scaled = np.int16(predictions[0] / np.max(np.abs(predictions[0])) * 32767)
-write(f'./generated_audio/{current_time}.wav', rate, scaled)
+# rate = 44100
+# scaled = np.int16(predictions[0] / np.max(np.abs(predictions[0])) * 32767)
+# write(f'./generated_audio/{current_time}_generated.wav', rate, scaled)
 
-
-
-# X_pred = np.argmax(predictions, axis = 1)
-# X_test_labels = np.argmax(y_test, axis = 1)
-
-# test_accuracy = accuracy(y_pred, y_test_labels)
-
-# print("Accuracy on test data: ", test_accuracy)
-
-# Create confusion matrices
-# labels = ["birds", "not_birds"]
-
-# cm = confusion_matrix(y_test_labels, y_pred)
-
-# disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
-
-# disp.plot(cmap=plt.cm.Reds)
-# plt.savefig(f'{figure_folder}/confusion_matrix.png')
-# plt.clf()
-
-# cmn = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-# fig, ax = plt.subplots(figsize=(8,6))
-# sns.heatmap(cmn, annot=True, fmt='.2f', xticklabels=labels, yticklabels=labels, cmap="Spectral")
-# plt.ylabel('True label')
-# plt.xlabel('Predicted label')
-# plt.savefig(f'{figure_folder}/confusion_matrix_percent.png')
+# scaled_original = np.int16(X_test[0] / np.max(np.abs(X_test[0])) * 32767)
+# write(f'./generated_audio/{current_time}_original.wav', rate, scaled_original)
