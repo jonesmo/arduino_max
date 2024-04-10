@@ -1,10 +1,14 @@
 import random
-import asyncio
 import os
 import time
+import threading
+import asyncio
+from killport import get_processes, kill_ports
 
 from utilities import load_mfccs, load_model, predict_sample
 from utilities_osc import osc_server, send_as_osc
+
+import config as config
 
 cwd = os.getcwd()
 model_path = os.path.join(cwd, "trained_models", "model1.keras")
@@ -20,31 +24,72 @@ class_map = {0: {"mfccs": water, "num": len(water), "name": "water"},
 }
 
 ip = "127.0.0.1"
-port = 5006
+port_send_left = 5004
+port_send_right = 5005
+port_listen_left = 5006
+port_listen_right = 5007
 
 # Loop
-end_time = time.time() + 20
+length = 30 # seconds
 
 class_left = 0
 index_left = -1
 class_right = 2
 index_right = 0
 
-while time.time() < end_time:
-  sample_left = class_map[class_left]["mfccs"][index_left]
-  sample_right = class_map[class_right]["mfccs"][index_right]
+prediction_left = class_left
+prediction_right = class_right
   
-  prediction_left = predict_sample(model, sample_left)
-  print("\nClass prediction left: ", class_map[prediction_left]["name"], " ", prediction_left)
+async def left_loop(loop):
+  global prediction_left, index_left, class_map, end_time
+  end_time = time.time() + length
   
-  prediction_right = predict_sample(model, sample_right)
-  print("\nClass prediction right: ", class_map[prediction_right]["name"], " ", prediction_right)
+  while time.time() < end_time:
+    sample_left = class_map[prediction_left]["mfccs"][index_left]
+    
+    prediction_left = predict_sample(model, sample_left)
+    print("\nClass prediction left: ", class_map[prediction_left]["name"], " ", prediction_left)
+    
+    index_left = random.randint(1, class_map[prediction_left]["num"] - 1)
+    print("Left sample to play: ", index_left, " / ", class_map[prediction_left]["num"], "\n")
+    
+    send_as_osc(port_send_left, "/prediction_left", prediction_left, index_left)
+    
+    await osc_server(ip, port_listen_left, "left", loop)
+    
+async def right_loop(loop):
+  global prediction_right, index_right, class_map, end_time
+  end_time = time.time() + length
   
-  index_left = random.randint(0, class_map[prediction_left]["num"])
-  print("Left sample to play: ", index_left, " / ", class_map[prediction_left]["num"], "\n")
+  while time.time() < end_time:
+    sample_right = class_map[prediction_right]["mfccs"][index_right]
+      
+    prediction_right = predict_sample(model, sample_right)
+    print("\nClass prediction right: ", class_map[prediction_right]["name"], " ", prediction_right)
+    
+    index_right = random.randint(1, class_map[prediction_right]["num"] - 1)
+    print("Right sample to play: ", index_right, " / ", class_map[prediction_right]["num"], "\n")
+    
+    send_as_osc(port_send_right, "/prediction_right", prediction_right, index_right)
+    
+    await osc_server(ip, port_listen_right, "right", loop)
 
-  index_right = random.randint(0, class_map[prediction_right]["num"])
-  print("Right sample to play: ", index_right, " / ", class_map[prediction_right]["num"], "\n")
-  
-  send_as_osc(5005, "/prediction", prediction_left, index_left, prediction_right, index_right)
-  asyncio.run(osc_server(ip, port))
+def between_callback_left():
+    loop_left = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop_left)
+
+    loop_left.run_until_complete(left_loop(loop_left))
+    loop_left.close()
+
+def between_callback_right():
+    loop_right = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop_right)
+
+    loop_right.run_until_complete(right_loop(loop_right))
+    loop_right.close()
+
+thread1 = threading.Thread(target=between_callback_left)
+# thread2 = threading.Thread(target=between_callback_right)
+
+thread1.start()
+# thread2.start()
