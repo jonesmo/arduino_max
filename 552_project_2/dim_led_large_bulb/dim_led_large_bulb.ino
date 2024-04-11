@@ -10,14 +10,14 @@ void loop() {
   if (i == 0) {
     for (i; i < 255; i++) {
     analogWrite(ledPin, i);
-    delay(10);
+    delay(15);
     }
   }
 
   if (i == 255) {
     for (i; i > 0; i--) {
       analogWrite(ledPin, i);
-      delay(7);
+      delay(10);
     }
   }
 }

@@ -89,7 +89,13 @@ def between_callback_right():
     loop_right.close()
 
 thread1 = threading.Thread(target=between_callback_left)
-# thread2 = threading.Thread(target=between_callback_right)
+thread2 = threading.Thread(target=between_callback_right)
+
+thread1.daemon = True
+thread2.daemon = True
 
 thread1.start()
-# thread2.start()
+thread2.start()
+
+thread1.join()
+thread2.join()
