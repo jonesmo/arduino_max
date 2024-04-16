@@ -20,13 +20,10 @@ unsigned int g_x_out, g_y_out, g_z_out;
 /////////////////////// TOUCH CAPACITOR /////////////////
 #define TOUCH_ADDRESS 0x5A
 
-#ifndef _BV
-#define _BV(bit) (1 << (bit)) 
-#endif
-
 Adafruit_MPR121 cap = Adafruit_MPR121();
-uint16_t lasttouched = 0;
-uint16_t currtouched = 0;
+
+uint16_t R_state;
+uint16_t L_state;
 
 ////////////////////// PRESSURE SENSOR ////////////////////
 int pressure_reading;
@@ -77,8 +74,8 @@ void setup() {
 void loop()
 {
   imuStep();
-  touchStep();
   pressureStep();
+  touchStep();
   lightStep();
   serialStep();
   delay(10);
@@ -90,41 +87,19 @@ void imuStep() {
   IMU.getGyro(&gyroData);
 }
 
-void touchStep() {
-  currtouched = cap.touched();
-  
-  for (uint8_t i=0; i<12; i++) {
-    if ((currtouched & _BV(i)) && !(lasttouched & _BV(i)) ) {
-      Serial.print(i); Serial.println(" touched");
-    }
-    if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
-      Serial.print(i); Serial.println(" released");
-    }
-  }
-
-  lasttouched = currtouched;
-
-  // comment out this line for detailed data from the sensor!
-  return;
-
-  // debugging info
-  Serial.print("\t\t\t\t\t\t\t\t\t\t\t\t\t 0x"); Serial.println(cap.touched(), HEX);
-  Serial.print("Filt: ");
-  for (uint8_t i=0; i<12; i++) {
-    Serial.print(cap.filteredData(i)); Serial.print("\t");
-  }
-  Serial.println();
-  Serial.print("Base: ");
-  for (uint8_t i=0; i<12; i++) {
-    Serial.print(cap.baselineData(i)); Serial.print("\t");
-  }
-  Serial.println();
-}
-
 void pressureStep() {
   pressure_reading = analogRead(analogPin);
 
   // Serial.println(pressure_reading);
+}
+
+void touchStep() {
+  R_state = cap.filteredData(0);
+  L_state = cap.filteredData(1);
+
+  // Serial.println(R_state);
+  // Serial.println(L_state);
+  // Serial.println();
 }
 
 void lightStep() {
@@ -192,10 +167,13 @@ void serialStep() {
   Serial.write(g_z_out >> 7);
   Serial.write(g_z_out & 127);
 
-  /////// touch capacitor data ///////////////
-  // Serial.write(254);
-
   /////// pressure data ///////////////
   Serial.write(pressure_reading >> 7);
   Serial.write(pressure_reading & 127);
+
+  /////// touch capacitor data ///////////////
+  Serial.write(L_state >> 7);
+  Serial.write(L_state & 127);
+  Serial.write(R_state >> 7);
+  Serial.write(R_state & 127);
 }
