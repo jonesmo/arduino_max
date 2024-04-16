@@ -29,7 +29,7 @@ uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
 
 ////////////////////// PRESSURE SENSOR ////////////////////
-int a_reading;
+int pressure_reading;
 int analogPin = 0;
 
 ///////////////////// LIGHT BULBS ////////////////////////
@@ -122,9 +122,9 @@ void touchStep() {
 }
 
 void pressureStep() {
-  a_reading = analogRead(analogPin);
+  pressure_reading = analogRead(analogPin);
 
-  Serial.println(a_reading);
+  // Serial.println(pressure_reading);
 }
 
 void lightStep() {
@@ -150,7 +150,7 @@ void lightStep() {
 }
 
 void serialStep() {
-
+  /////// IMU data ///////////////
   float scaleNumerator = (1<<14) - 1.0;
   float accelScale = scaleNumerator / ((float) ACCEL_RANGE * 2.0);
   
@@ -165,30 +165,37 @@ void serialStep() {
   g_z_out = (unsigned int) ((gyroData.gyroZ + GYRO_RANGE) * gyroScale);
 
 
-  Serial.print("acc: ");
-  Serial.print(a_x_out);
-  Serial.print(" | ");
-  Serial.print(a_y_out);
-  Serial.print(" | ");  
-  Serial.println(a_z_out);
+  // Serial.print("acc: ");
+  // Serial.print(a_x_out);
+  // Serial.print(" | ");
+  // Serial.print(a_y_out);
+  // Serial.print(" | ");  
+  // Serial.println(a_z_out);
 
   //separate packets with the value 255
-  // Serial.write(255);
+  Serial.write(255);
 
   // for each axis, send 7MSB by right shifting by 7
   // then send 7LSB by binary & with 0b1111111 (==127)
   
-  // Serial.write(a_x_out >> 7);
-  // Serial.write(a_x_out & 127);
-  // Serial.write(a_y_out >> 7);
-  // Serial.write(a_y_out & 127);
-  // Serial.write(a_z_out >> 7);
-  // Serial.write(a_z_out & 127);
+  Serial.write(a_x_out >> 7);
+  Serial.write(a_x_out & 127);
+  Serial.write(a_y_out >> 7);
+  Serial.write(a_y_out & 127);
+  Serial.write(a_z_out >> 7);
+  Serial.write(a_z_out & 127);
 
-  // Serial.write(g_x_out >> 7);
-  // Serial.write(g_x_out & 127);
-  // Serial.write(g_y_out >> 7);
-  // Serial.write(g_y_out & 127);
-  // Serial.write(g_z_out >> 7);
-  // Serial.write(g_z_out & 127);
+  Serial.write(g_x_out >> 7);
+  Serial.write(g_x_out & 127);
+  Serial.write(g_y_out >> 7);
+  Serial.write(g_y_out & 127);
+  Serial.write(g_z_out >> 7);
+  Serial.write(g_z_out & 127);
+
+  /////// touch capacitor data ///////////////
+  // Serial.write(254);
+
+  /////// pressure data ///////////////
+  Serial.write(pressure_reading >> 7);
+  Serial.write(pressure_reading & 127);
 }
