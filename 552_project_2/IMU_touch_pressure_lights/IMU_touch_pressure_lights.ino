@@ -144,11 +144,6 @@ void lightStep() {
 void serialStep() {
   /////// IMU data ///////////////
   float scaleNumerator = (1<<14) - 1.0;
-  float accelScale = scaleNumerator / ((float) ACCEL_RANGE * 2.0);
-  
-  a_x_out = (unsigned int) ((accelData.accelX + ACCEL_RANGE) * accelScale);
-  a_y_out = (unsigned int) ((accelData.accelY + ACCEL_RANGE) * accelScale);
-  a_z_out = (unsigned int) ((accelData.accelZ + ACCEL_RANGE) * accelScale);
 
   float gyroScale = scaleNumerator / ((float) GYRO_RANGE * 2.0);
 
@@ -156,22 +151,7 @@ void serialStep() {
   g_y_out = (unsigned int) ((gyroData.gyroY + GYRO_RANGE) * gyroScale);
   g_z_out = (unsigned int) ((gyroData.gyroZ + GYRO_RANGE) * gyroScale);
 
-
-  // Serial.print("acc: ");
-  // Serial.print(a_x_out);
-  // Serial.print(" | ");
-  // Serial.print(a_y_out);
-  // Serial.print(" | ");  
-  // Serial.println(a_z_out);
-
   Serial.write(255);
-  
-  Serial.write(a_x_out >> 7);
-  Serial.write(a_x_out & 127);
-  Serial.write(a_y_out >> 7);
-  Serial.write(a_y_out & 127);
-  Serial.write(a_z_out >> 7);
-  Serial.write(a_z_out & 127);
 
   Serial.write(g_x_out >> 7);
   Serial.write(g_x_out & 127);
