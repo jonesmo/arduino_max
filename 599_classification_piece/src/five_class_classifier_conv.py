@@ -53,7 +53,7 @@ lr = 1e-3
 model = keras.Sequential([
 				layers.Input(shape=(dimensions, 1)),
 				layers.Conv1D(filters=512, kernel_size=3, activation='relu'),
-    		layers.MaxPooling1D(pool_size=2),
+    		    layers.MaxPooling1D(pool_size=2),
 				layers.Flatten(),
 				layers.Dense(128, activation='relu'),
 				layers.Dense(5, activation='linear'),

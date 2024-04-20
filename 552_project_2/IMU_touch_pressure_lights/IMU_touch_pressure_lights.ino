@@ -13,7 +13,6 @@ calData calib = { 0 };
 AccelData accelData;
 GyroData gyroData;
 
-// unsigned 16-bit variables for adjusted values to be sent to max
 unsigned int a_x_out, a_y_out, a_z_out;
 unsigned int g_x_out, g_y_out, g_z_out;
 
@@ -32,7 +31,10 @@ int analogPin = 0;
 ///////////////////// LIGHT BULBS ////////////////////////
 int ledPin   = 3;
 int i = 0;
-bool increasing = true;
+// bool increasing = false;
+// bool decreasing = false;
+byte inbyte;
+// bool lights_on = false;
 
 void setup() {
   Serial.begin(115200);
@@ -103,25 +105,40 @@ void touchStep() {
 }
 
 void lightStep() {
-  if (increasing == true) {
-    if (i < 255) {
-        i++;
+  if (Serial.available()) {
+    inbyte = Serial.read();
+
+    if (inbyte == 254) {
+      for (i; i < 255; i++) {
         analogWrite(ledPin, i);
+      }
     }
-    if (i == 255) {
-      increasing = false;
+    if (inbyte == 253) {
+      for (i; i > 0; i--) {
+        analogWrite(ledPin, i);
+      }
     }
   }
 
-  if (increasing == false) {
-    if (i > 0) {
-      i--;
-      analogWrite(ledPin, i);
-    }
-    if (i == 0) {
-      increasing = true;
-    }
-  }
+  // if (increasing == true) {
+  //   if (i < 255) {
+  //       i++;
+  //       analogWrite(ledPin, i);
+  //   }
+  //   if (i == 255) {
+  //     increasing = false;
+  //   }
+  // }
+
+  // if (increasing == false) {
+  //   if (i > 0) {
+  //     i--;
+  //     analogWrite(ledPin, i);
+  //   }
+  //   if (i == 0) {
+  //     increasing = true;
+  //   }
+  // }
 }
 
 void serialStep() {
@@ -147,11 +164,7 @@ void serialStep() {
   // Serial.print(" | ");  
   // Serial.println(a_z_out);
 
-  //separate packets with the value 255
   Serial.write(255);
-
-  // for each axis, send 7MSB by right shifting by 7
-  // then send 7LSB by binary & with 0b1111111 (==127)
   
   Serial.write(a_x_out >> 7);
   Serial.write(a_x_out & 127);
