@@ -2482,7 +2482,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 451.0, 309.0, 109.0, 22.0 ],
-									"text" : "241684."
+									"text" : "468247.833333"
 								}
 
 							}
@@ -2516,8 +2516,8 @@
 									"numinlets" : 1,
 									"numoutlets" : 2,
 									"outlettype" : [ "float", "bang" ],
-									"patching_rect" : [ 456.0, 200.0, 160.0, 22.0 ],
-									"text" : "buffer~ soothing stefani.m4a"
+									"patching_rect" : [ 395.75, 200.0, 256.0, 22.0 ],
+									"text" : "buffer~ soothing stillness_soundscape_v1.wav"
 								}
 
 							}
@@ -2760,7 +2760,7 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-15", 0 ],
-									"midpoints" : [ 465.5, 183.0, 465.5, 183.0 ],
+									"midpoints" : [ 465.5, 183.0, 405.25, 183.0 ],
 									"source" : [ "obj-11", 0 ]
 								}
 
@@ -2786,7 +2786,7 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-14", 0 ],
-									"midpoints" : [ 606.5, 237.0, 460.5, 237.0 ],
+									"midpoints" : [ 642.25, 237.0, 460.5, 237.0 ],
 									"source" : [ "obj-15", 1 ]
 								}
 
@@ -3046,6 +3046,7 @@
 						"style" : "",
 						"subpatcher_template" : "",
 						"assistshowspatchername" : 0,
+						"visible" : 1,
 						"boxes" : [ 							{
 								"box" : 								{
 									"id" : "obj-34",
@@ -5166,7 +5167,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 790.0, 404.0, 50.0, 22.0 ],
-					"text" : "45"
+					"text" : "46"
 				}
 
 			}
@@ -5178,7 +5179,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 626.0, 404.0, 50.0, 22.0 ],
-					"text" : "44"
+					"text" : "46"
 				}
 
 			}
@@ -6001,7 +6002,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 229.0, 131.0, 39.0, 22.0 ],
-					"text" : "port c"
+					"text" : "port d"
 				}
 
 			}
