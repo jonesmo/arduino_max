@@ -25,7 +25,7 @@ void loop() {
   readStep();
   // printStep();
   serialStep();
-	delay(1000);
+	delay(100);
 }
 
 void readStep() {
