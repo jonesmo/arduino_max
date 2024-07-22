@@ -2,6 +2,9 @@ s.boot;
 s.makeWindow; // for recording
 s.reboot;
 s.quit;
+s.prepareForRecord("/Users/mej/Documents/atlantic_center/granulator.wav", 2);
+s.record();
+s.stopRecording();
 
 currentEnvironment;
 currentEnvironment.clear;
@@ -23,8 +26,11 @@ s.options.outDevice_("External Headphones");
 // ~buf0 = Buffer.readChannel(s, "stefani.wav".resolveRelative, channels: [0]);
 // ~buf1 = Buffer.readChannel(s, "ghosts.wav".resolveRelative, channels: [0]);
 
-~buf0 = Buffer.readChannel(s, "mms_05b.mp3".resolveRelative, channels: [0]);
-~buf1 = Buffer.readChannel(s, "stefani.wav".resolveRelative, channels: [0]);
+// ~buf0 = Buffer.readChannel(s, "mms_05b.mp3".resolveRelative, channels: [0]);
+// ~buf1 = Buffer.readChannel(s, "stefani.wav".resolveRelative, channels: [0]);
+
+~buf0 = Buffer.readChannel(s, "wind_to_inhabit.wav".resolveRelative, channels: [0]);
+~buf1 = Buffer.readChannel(s, "alto_flute_cell_2.wav".resolveRelative, channels: [0]);
 )
 
 // GrainBuf SynthDef and Envelopes
@@ -537,7 +543,7 @@ MIDIIn.connectAll;
 
 		if (~buff0_exists == 1) {
 			shortest = 5.0 / ~buf0.sampleRate;
-			longest = 1.0;
+			longest = 1.5;
 
 			~grainlength0 = cvalue.linexp(1, 127, shortest, longest);
 			~synths[0].set(\grainlength, ~grainlength0);
@@ -778,7 +784,7 @@ MIDIIn.connectAll;
 		| cvalue, ctlnum, channel, device |
 
 		if (~buff1_exists == 1) {
-			~triggerrate1 = cvalue.linlin(1, 127, 2, 40);
+			~triggerrate1 = cvalue.linlin(1, 127, 0.5, 40);
 			~synths[1].set(\triggerrate, ~triggerrate1);
 		}
 	}, ccNum: 10, chan: 0
