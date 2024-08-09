@@ -30,7 +30,7 @@ port_listen_left = 5006
 port_listen_right = 5007
 
 # Loop
-length = 60 # seconds
+length = 1800 # seconds
 
 class_left = 0
 index_left = -1
