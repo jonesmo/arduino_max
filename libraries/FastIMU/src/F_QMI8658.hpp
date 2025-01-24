@@ -4,6 +4,7 @@
 #define _F_QMI8658_H_
 
 #include "IMUBase.hpp"
+#include "IMUUtils.hpp"
 /*
 
 	QMI8658 REGISTERS
@@ -56,13 +57,14 @@
 #define QMI8658_REVISION_ID 0x01
 #define QMI8658_WHO_AM_I 0x00
 #define QMI8658_WHO_AM_I_DEFAULT_VALUE 0x05
+#define QMI8658_DEFAULT_ADDRESS 0x6B
 
 class QMI8658 : public IMUBase {
 public:
-	QMI8658() {};
+	explicit QMI8658(TwoWire& wire = Wire) : wire(wire) {};
 
 	// Inherited via IMUBase
-	int init(calData cal, uint8_t address) override;
+	int init(calData cal, uint8_t address = QMI8658_DEFAULT_ADDRESS) override;
 
 	void update() override;
 	void getAccel(AccelData* out) override;
@@ -110,37 +112,8 @@ private:
 	calData calibration;
 	uint8_t IMUAddress;
 
-	bool dataAvailable(){ return (readByte(IMUAddress, QMI8658_STATUS0) & 0x03);}
-
-	void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
-	{
-		Wire.beginTransmission(address);  // Initialize the Tx buffer
-		Wire.write(subAddress);           // Put slave register address in Tx buffer
-		Wire.write(data);                 // Put data in Tx buffer
-		Wire.endTransmission();           // Send the Tx buffer
-	}
-
-	uint8_t readByte(uint8_t address, uint8_t subAddress)
-	{
-		uint8_t data; 						   // `data` will store the register data
-		Wire.beginTransmission(address);         // Initialize the Tx buffer
-		Wire.write(subAddress);                  // Put slave register address in Tx buffer
-		Wire.endTransmission(false);             // Send the Tx buffer, but send a restart to keep connection alive
-		Wire.requestFrom(address, (uint8_t)1);  // Read one byte from slave register address
-		data = Wire.read();                      // Fill Rx buffer with result
-		return data;                             // Return data read from slave register
-	}
-
-	void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t* dest)
-	{
-		Wire.beginTransmission(address);   // Initialize the Tx buffer
-		Wire.write(subAddress);            // Put slave register address in Tx buffer
-		Wire.endTransmission(false);       // Send the Tx buffer, but send a restart to keep connection alive
-		uint8_t i = 0;
-		Wire.requestFrom(address, count);  // Read bytes from slave register address
-		while (Wire.available()) {
-			dest[i++] = Wire.read();
-		}         // Put read results in the Rx buffer
-	}
+	TwoWire& wire;
+	
+	bool dataAvailable(){ return (readByteI2C(wire, IMUAddress, QMI8658_STATUS0) & 0x03);}
 };
 #endif /* _F_QMI8658_H_ */

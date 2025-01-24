@@ -4,31 +4,13 @@
 #define _F_MPU9250_H_
 
 #include "IMUBase.hpp"
+#include "F_AK8963.hpp"
+#include "IMUUtils.hpp"
 /*
 
 	MPU9250 REGISTERS
 
 */
-
-//Magnetometer Registers
-#define AK8963_ADDRESS   0x0C
-#define AK8963_WHO_AM_I  0x00 // should return 0x48
-#define AK8963_WHOAMI_DEFAULT_VALUE 0x48
-#define AK8963_INFO      0x01
-#define AK8963_ST1       0x02  // data ready status bit 0
-#define AK8963_XOUT_L	 0x03  // data
-#define AK8963_XOUT_H	 0x04
-#define AK8963_YOUT_L	 0x05
-#define AK8963_YOUT_H	 0x06
-#define AK8963_ZOUT_L	 0x07
-#define AK8963_ZOUT_H	 0x08
-#define AK8963_ST2       0x09  // Data overflow bit 3 and data read error status bit 2
-#define AK8963_CNTL      0x0A  // Power down (0000), single-measurement (0001), self-test (1000) and Fuse ROM (1111) modes on bits 3:0
-#define AK8963_ASTC      0x0C  // Self test control
-#define AK8963_I2CDIS    0x0F  // I2C disable
-#define AK8963_ASAX      0x10  // Fuse ROM x-axis sensitivity adjustment value
-#define AK8963_ASAY      0x11  // Fuse ROM y-axis sensitivity adjustment value
-#define AK8963_ASAZ      0x12  // Fuse ROM z-axis sensitivity adjustment value
 
 #define MPU9250_SELF_TEST_X_GYRO 0x00
 #define MPU9250_SELF_TEST_Y_GYRO 0x01
@@ -158,14 +140,14 @@
 #define MPU9250_ZA_OFFSET_H      0x7D
 #define MPU9250_ZA_OFFSET_L      0x7E
 
+#define MPU9250_DEFAULT_ADDRESS 0x68
 
 class MPU9250 : public IMUBase {
 public:
-	MPU9250() {};
+	explicit MPU9250(TwoWire& wire = Wire) : wire(wire) {};
 
 	// Inherited via IMUBase
-	int init(calData cal, uint8_t address) override;
-	int initMagnetometer();
+	int init(calData cal, uint8_t address = MPU9250_DEFAULT_ADDRESS) override;
 
 	void update() override;
 	void getAccel(AccelData* out) override;
@@ -176,13 +158,18 @@ public:
 
 	int setGyroRange(int range) override;
 	int setAccelRange(int range) override;
-	int setIMUGeometry(int index) override { geometryIndex = index; return 0; };
+	int setIMUGeometry(int index) override 
+	{ 
+		mag.setIMUGeometry(index);
+		geometryIndex = index;
+		return 0; 
+	};
 
 	void calibrateAccelGyro(calData* cal) override;
 	void calibrateMag(calData* cal) override;
 
 	bool hasMagnetometer() override {
-		return true;
+		return mag.hasMagnetometer();
 	}
 	bool hasTemperature() override {
 		return true;
@@ -203,51 +190,21 @@ public:
 private:
 	float aRes = 16.0 / 32768.0;			//ares value for full range (16g) readings
 	float gRes = 2000.0 / 32768.0;			//gres value for full range (2000dps) readings
-	float mRes = 10. * 4912. / 32760.0;		//mres value for full range (4912uT) readings
 
 	int geometryIndex = 0;
 	float temperature = 0.f;
 	AccelData accel = { 0 };
 	GyroData gyro = { 0 };
-	MagData mag = { 0 };
+
+	AK8963 mag;
 
 	calData calibration;
 	uint8_t IMUAddress;
 
-
-	void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
-	{
-		Wire.beginTransmission(address);  // Initialize the Tx buffer
-		Wire.write(subAddress);           // Put slave register address in Tx buffer
-		Wire.write(data);                 // Put data in Tx buffer
-		Wire.endTransmission();           // Send the Tx buffer
-	}
-
-	uint8_t readByte(uint8_t address, uint8_t subAddress)
-	{
-		uint8_t data; 						   // `data` will store the register data
-		Wire.beginTransmission(address);         // Initialize the Tx buffer
-		Wire.write(subAddress);                  // Put slave register address in Tx buffer
-		Wire.endTransmission(false);             // Send the Tx buffer, but send a restart to keep connection alive
-		Wire.requestFrom(address, (uint8_t)1);  // Read one byte from slave register address
-		data = Wire.read();                      // Fill Rx buffer with result
-		return data;                             // Return data read from slave register
-	}
-
-	void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t* dest)
-	{
-		Wire.beginTransmission(address);   // Initialize the Tx buffer
-		Wire.write(subAddress);            // Put slave register address in Tx buffer
-		Wire.endTransmission(false);       // Send the Tx buffer, but send a restart to keep connection alive
-		uint8_t i = 0;
-		Wire.requestFrom(address, count);  // Read bytes from slave register address
-		while (Wire.available()) {
-			dest[i++] = Wire.read();
-		}         // Put read results in the Rx buffer
-	}
+	TwoWire& wire;
 
 	float factoryMagCal[3] = { 0 };
 
-	bool dataAvailable(){ return (readByte(IMUAddress, MPU9250_INT_STATUS) & 0x01);}
+	bool dataAvailable(){ return (readByteI2C(wire, IMUAddress, MPU9250_INT_STATUS) & 0x01);}
 };
 #endif /* _F_MPU9250_H_ */

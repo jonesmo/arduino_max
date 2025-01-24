@@ -4,6 +4,7 @@
 #define _F_QMC5883L_H_
 
 #include "IMUBase.hpp"
+#include "IMUUtils.hpp"
 /*
 
 	QMC5883L REGISTERS
@@ -25,13 +26,14 @@
 #define QMC5883L_WHOAMI		0x0D
 
 #define QMC5883L_WHOAMI_VALUE	0xFF
+#define QMC5883L_DEFAULT_ADDRESS 0x0D
 
 class QMC5883L : public IMUBase {
 public:
-	QMC5883L() {};
+	explicit QMC5883L(TwoWire& wire = Wire) : wire(wire) {};
 
 	// Inherited via IMUBase
-	int init(calData cal, uint8_t address) override;
+	int init(calData cal, uint8_t address = QMC5883L_DEFAULT_ADDRESS) override;
 
 	void update() override;
 	void getAccel(AccelData* out) override {};
@@ -67,8 +69,8 @@ public:
 	}
 
 private:
-	float mRes = 8.f / 32768.f;				//mRes value for full range (+-8 gauss) readings (16 bit)
-	float tRes = 100.f / 32768.f;			//mRes value for full range (+-8 gauss) readings (16 bit)
+	float mRes = 10. * 819.2f / 32768.f;				//mRes value for full range (+-819.2 uT scaled * 10) readings (16 bit)
+	float tRes = 100.f / 32768.f;			//tRes value for full range readings (16 bit)
 	float temperature = 0.f;
 	int geometryIndex = 0;
 	
@@ -79,35 +81,6 @@ private:
 	calData calibration;
 	uint8_t IMUAddress;
 
-	void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
-	{
-		Wire.beginTransmission(address);  // Initialize the Tx buffer
-		Wire.write(subAddress);           // Put slave register address in Tx buffer
-		Wire.write(data);                 // Put data in Tx buffer
-		Wire.endTransmission();           // Send the Tx buffer
-	}
-
-	uint8_t readByte(uint8_t address, uint8_t subAddress)
-	{
-		uint8_t data; 						   // `data` will store the register data
-		Wire.beginTransmission(address);         // Initialize the Tx buffer
-		Wire.write(subAddress);                  // Put slave register address in Tx buffer
-		Wire.endTransmission(false);             // Send the Tx buffer, but send a restart to keep connection alive
-		Wire.requestFrom(address, (uint8_t)1);  // Read one byte from slave register address
-		data = Wire.read();                      // Fill Rx buffer with result
-		return data;                             // Return data read from slave register
-	}
-
-	void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t* dest)
-	{
-		Wire.beginTransmission(address);   // Initialize the Tx buffer
-		Wire.write(subAddress);            // Put slave register address in Tx buffer
-		Wire.endTransmission(false);       // Send the Tx buffer, but send a restart to keep connection alive
-		uint8_t i = 0;
-		Wire.requestFrom(address, count);  // Read bytes from slave register address
-		while (Wire.available()) {
-			dest[i++] = Wire.read();
-		}         // Put read results in the Rx buffer
-	}
+	TwoWire& wire;
 };
 #endif /* _F_QMC5883L_H_ */

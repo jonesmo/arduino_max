@@ -4,6 +4,7 @@
 #define _F_LSM6DSL_H_
 
 #include "IMUBase.hpp"
+#include "IMUUtils.hpp"
 /*
 
 	LSM6DSL REGISTERS
@@ -50,14 +51,17 @@
 #define LSM6DSL_OUTZ_L_XL			0x2C
 #define LSM6DSL_OUTZ_H_XL			0x2D
 
-#define LSM6DSL_WHOAMI_DEFAULT_VALUE	0x6A
+#define LSM6DSL_WHOAMI_DEFAULT_VALUE_A	0x6A
+#define LSM6DSL_WHOAMI_DEFAULT_VALUE_B	0x6B
+
+#define LSM6DSL_DEFAULT_ADDRESS 0x6B
 
 class LSM6DSL : public IMUBase {
 public:
-	LSM6DSL() {};
+	explicit LSM6DSL(TwoWire& wire = Wire) : wire(wire) {};
 
 	// Inherited via IMUBase
-	int init(calData cal, uint8_t address) override;
+	int init(calData cal, uint8_t address = LSM6DSL_DEFAULT_ADDRESS) override;
 
 	void update() override;
 	void getAccel(AccelData* out) override;
@@ -104,36 +108,18 @@ private:
 	calData calibration;
 	uint8_t IMUAddress;
 
+	TwoWire& wire;
 
-	void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
+	uint8_t checkReady(uint8_t address, uint8_t timeout)
 	{
-		Wire.beginTransmission(address);  // Initialize the Tx buffer
-		Wire.write(subAddress);           // Put slave register address in Tx buffer
-		Wire.write(data);                 // Put data in Tx buffer
-		Wire.endTransmission();           // Send the Tx buffer
-	}
-
-	uint8_t readByte(uint8_t address, uint8_t subAddress)
-	{
-		uint8_t data; 						   // `data` will store the register data
-		Wire.beginTransmission(address);         // Initialize the Tx buffer
-		Wire.write(subAddress);                  // Put slave register address in Tx buffer
-		Wire.endTransmission(false);             // Send the Tx buffer, but send a restart to keep connection alive
-		Wire.requestFrom(address, (uint8_t)1);  // Read one byte from slave register address
-		data = Wire.read();                      // Fill Rx buffer with result
-		return data;                             // Return data read from slave register
-	}
-
-	void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t* dest)
-	{
-		Wire.beginTransmission(address);   // Initialize the Tx buffer
-		Wire.write(subAddress);            // Put slave register address in Tx buffer
-		Wire.endTransmission(false);       // Send the Tx buffer, but send a restart to keep connection alive
-		uint8_t i = 0;
-		Wire.requestFrom(address, count);  // Read bytes from slave register address
-		while (Wire.available()) {
-			dest[i++] = Wire.read();
-		}         // Put read results in the Rx buffer
+		uint8_t IMUWhoAmI = 0;
+		// Wait until a valid byte is returned, up until timeout value.
+		for (uint8_t checkCount = timeout; checkCount > 0; checkCount--) {
+			IMUWhoAmI = readByteI2C(wire, address, LSM6DSL_WHO_AM_I);
+			if (IMUWhoAmI == 0xFF) { delay(1); } else { break; }
+		}
+		// Return IMU identifier if found.
+		return IMUWhoAmI;
 	}
 };
 #endif /* _F_LSM6DSL_H_ */

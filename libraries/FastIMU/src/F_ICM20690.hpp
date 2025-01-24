@@ -4,6 +4,7 @@
 #define _F_ICM20690_H_
 
 #include "IMUBase.hpp"
+#include "IMUUtils.hpp"
 /*
 
 	ICM20690 REGISTERS
@@ -81,13 +82,14 @@
 #define ICM20690_ZA_OFFSET_H      0x7D
 #define ICM20690_ZA_OFFSET_L      0x7E
 
+#define ICM20690_DEFAULT_ADDRESS 0x68
 
 class ICM20690 : public IMUBase {
 public:
-	ICM20690() {};
+	explicit ICM20690(TwoWire& wire = Wire) : wire(wire) {};
 
 	// Inherited via IMUBase
-	int init(calData cal, uint8_t address) override;
+	int init(calData cal, uint8_t address = ICM20690_DEFAULT_ADDRESS) override;
 
 	void update() override;
 	void getAccel(AccelData* out) override;
@@ -134,38 +136,8 @@ private:
 	calData calibration;
 	uint8_t IMUAddress;
 
+	TwoWire& wire;
 
-	void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
-	{
-		Wire.beginTransmission(address);  // Initialize the Tx buffer
-		Wire.write(subAddress);           // Put slave register address in Tx buffer
-		Wire.write(data);                 // Put data in Tx buffer
-		Wire.endTransmission();           // Send the Tx buffer
-	}
-
-	uint8_t readByte(uint8_t address, uint8_t subAddress)
-	{
-		uint8_t data; 						   // `data` will store the register data
-		Wire.beginTransmission(address);         // Initialize the Tx buffer
-		Wire.write(subAddress);                  // Put slave register address in Tx buffer
-		Wire.endTransmission(false);             // Send the Tx buffer, but send a restart to keep connection alive
-		Wire.requestFrom(address, (uint8_t)1);  // Read one byte from slave register address
-		data = Wire.read();                      // Fill Rx buffer with result
-		return data;                             // Return data read from slave register
-	}
-
-	void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t* dest)
-	{
-		Wire.beginTransmission(address);   // Initialize the Tx buffer
-		Wire.write(subAddress);            // Put slave register address in Tx buffer
-		Wire.endTransmission(false);       // Send the Tx buffer, but send a restart to keep connection alive
-		uint8_t i = 0;
-		Wire.requestFrom(address, count);  // Read bytes from slave register address
-		while (Wire.available()) {
-			dest[i++] = Wire.read();
-		}         // Put read results in the Rx buffer
-	}
-
-	bool dataAvailable(){ return (readByte(IMUAddress, ICM20690_INT_STATUS) & 0x01);}
+	bool dataAvailable(){ return (readByteI2C(wire, IMUAddress, ICM20690_INT_STATUS) & 0x01);}
 };
 #endif /* _F_ICM20690_H_ */

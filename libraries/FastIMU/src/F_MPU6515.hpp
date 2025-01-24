@@ -4,6 +4,7 @@
 #define _F_MPU6515_H_
 
 #include "IMUBase.hpp"
+#include "IMUUtils.hpp"
 /*
 
 	MPU6515 REGISTERS
@@ -137,13 +138,14 @@
 #define MPU6515_ZA_OFFSET_H      0x7D
 #define MPU6515_ZA_OFFSET_L      0x7E
 
+#define MPU6515_DEFAULT_ADDRESS 0x68
 
 class MPU6515 : public IMUBase {
 public:
-	MPU6515() {};
+	explicit MPU6515(TwoWire& wire = Wire) : wire(wire) {};
 
 	// Inherited via IMUBase
-	int init(calData cal, uint8_t address) override;
+	int init(calData cal, uint8_t address = MPU6515_DEFAULT_ADDRESS) override;
 
 	void update() override;
 	void getAccel(AccelData* out) override;
@@ -190,38 +192,8 @@ private:
 	calData calibration;
 	uint8_t IMUAddress;
 
-
-	void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
-	{
-		Wire.beginTransmission(address);  // Initialize the Tx buffer
-		Wire.write(subAddress);           // Put slave register address in Tx buffer
-		Wire.write(data);                 // Put data in Tx buffer
-		Wire.endTransmission();           // Send the Tx buffer
-	}
-
-	uint8_t readByte(uint8_t address, uint8_t subAddress)
-	{
-		uint8_t data; 						   // `data` will store the register data
-		Wire.beginTransmission(address);         // Initialize the Tx buffer
-		Wire.write(subAddress);                  // Put slave register address in Tx buffer
-		Wire.endTransmission(false);             // Send the Tx buffer, but send a restart to keep connection alive
-		Wire.requestFrom(address, (uint8_t)1);  // Read one byte from slave register address
-		data = Wire.read();                      // Fill Rx buffer with result
-		return data;                             // Return data read from slave register
-	}
-
-	void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t* dest)
-	{
-		Wire.beginTransmission(address);   // Initialize the Tx buffer
-		Wire.write(subAddress);            // Put slave register address in Tx buffer
-		Wire.endTransmission(false);       // Send the Tx buffer, but send a restart to keep connection alive
-		uint8_t i = 0;
-		Wire.requestFrom(address, count);  // Read bytes from slave register address
-		while (Wire.available()) {
-			dest[i++] = Wire.read();
-		}         // Put read results in the Rx buffer
-	}
-
-	bool dataAvailable(){ return (readByte(IMUAddress, MPU6515_INT_STATUS) & 0x01);}
+	TwoWire& wire;
+	
+	bool dataAvailable(){ return (readByteI2C(wire, IMUAddress, MPU6515_INT_STATUS) & 0x01);}
 };
 #endif /* _F_MPU6515_H_ */
