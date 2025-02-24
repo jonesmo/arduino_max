@@ -56,7 +56,7 @@ void setup() {
   Serial.begin(57600);   // faster printing to get a bit better throughput on extended info
   // remember to change your serial monitor
 
-  Serial.println("start");
+  Serial.println("start wind sensor");
   // put your setup code here, to run once:
 
   //   Uncomment the three lines below to reset the analog pins A2 & A3
